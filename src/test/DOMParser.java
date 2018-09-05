@@ -38,11 +38,14 @@ public class DOMParser
 		JOptionPane.showMessageDialog(null, "Please click OK when you arrive at the required page.");
 		
 		System.out.println("=====================================================================================================================");
-		List<WebElement> allElements = driver.findElements(By.xpath("//*[contains(@formcontrolname,'')]"));		
+		List<WebElement> allFormControlNameElements = driver.findElements(By.xpath("//*[contains(@formcontrolname,'')]"));		
+		List<WebElement> allNgReflectNameElements = driver.findElements(By.xpath("//*[contains(@ng-reflect-name,'')]"));
+		List<WebElement> allCheckFlagElements = driver.findElements(By.xpath("//app-check-close[contains(@ng-reflect-is-check, 'true') or contains(@ng-reflect-is-check, 'false')]"));
+		List<WebElement> allButtonElements = driver.findElements(By.xpath("//button[@id!='']"));
 		ArrayList<WebElement> myElements = new ArrayList<WebElement>();
 		ArrayList<String> allLocatorNames = new ArrayList<String>();
 				
-		for(WebElement w : allElements)
+		for(WebElement w : allFormControlNameElements)
 		{
 			String s = w.getAttribute("formcontrolname");
 			if(s!=null)
@@ -50,47 +53,126 @@ public class DOMParser
 				myElements.add(w);
 			}
 		}
-		System.out.println();
+		
+		System.out.println("Ng reflect name element count : " + allNgReflectNameElements.size());
+		String tagName = "";
+		int ngreflectcounter = 0;
+		for(WebElement w : allNgReflectNameElements)
+		{
+			if(w.getAttribute("formcontrolname")==null || w.getAttribute("formcontrolname").equals(""))
+			{
+				tagName = w.getTagName();
+				if(tagName.equalsIgnoreCase("mat-slide-toggle"))
+				{
+					myElements.add(w);
+					ngreflectcounter++;
+				}
+			}
+		}
+		
+		for(WebElement w : allCheckFlagElements)
+		{
+			myElements.add(w);
+		}
+		
+		ArrayList buttonIds = new ArrayList();
+		for(WebElement w : allButtonElements)
+		{
+			if(!buttonIds.contains(w.getAttribute("id")))
+			{
+				buttonIds.add(w.getAttribute("id"));
+				myElements.add(w);
+			}
+		}
+
+
 		StringBuffer sbuf = new StringBuffer();
-		String currentLocatorName, formcontrolname;
+		String currentLocatorName, formcontrolname=null;
+		
+		//0 = formcontrolname
+		//1 = ngreflectname
+		//3 = Button (id)
+		int currentState = 0;
 		for(WebElement w : myElements)
 		{
+			currentState = 0;
 			formcontrolname = w.getAttribute("formcontrolname");
-			currentLocatorName = formcontrolname.substring(0,1).toUpperCase() + formcontrolname.substring(1, formcontrolname.length());
+			if(formcontrolname==null || formcontrolname.equals(""))
+			{
+				formcontrolname = w.getAttribute("ng-reflect-name");
+				currentState = 1;
+			}
+			if(formcontrolname==null || formcontrolname.equals(""))
+			{
+				formcontrolname = w.findElement(By.xpath("./following::div[1]")).getText();
+				currentState = 2;
+			}
+			if(formcontrolname==null || formcontrolname.equals(""))
+			{
+				formcontrolname = w.getAttribute("id");
+				currentState = 3;
+			}
+			if(formcontrolname==null || formcontrolname.equals(""))
+			{
+				continue;
+			}
+				
+			currentLocatorName = formcontrolname.substring(0,1).toUpperCase() + formcontrolname.substring(1, formcontrolname.length()).replace(" ", "").replace("-", "");
 			
 			switch(w.getTagName())
 			{
 			case "input": 
 				currentLocatorName = "txt"+currentLocatorName;
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				break;
 				
 			case "mat-select":
 				if(w.getAttribute("aria-multiselectable").trim().equalsIgnoreCase("false"))
 				{
 					currentLocatorName = "ddl"+currentLocatorName;
-					sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				}
 				else
 				{
 					currentLocatorName = "ddm"+currentLocatorName;
-					sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				}
 				break;
 				
 			case "textarea": 
 				currentLocatorName = "txa"+currentLocatorName;
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				break;
 				
 			case "mat-radio-group": 
 				currentLocatorName = "rdo"+currentLocatorName;
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				break;
 				
 			case "mat-slide-toggle": 
 				currentLocatorName = "tgl"+currentLocatorName;
+				break;
+				
+			case "app-check-close":
+				currentLocatorName = "chkIs"+currentLocatorName;
+				break;
+				
+			case "button":
+				currentLocatorName = "btn"+currentLocatorName;
+				break;
+			}
+			
+			switch(currentState)
+			{
+			case 0: 
 				sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
+				break;
+				
+			case 1:
+				sbuf.append("private readonly By "+currentLocatorName+" = Via.NgReflectName(\""+w.getAttribute("ng-reflect-name")+"\");\n");
+				break;
+				
+			case 2:
+				sbuf.append("private readonly By "+currentLocatorName+" = Via.CheckFlagFor(\""+formcontrolname+"\");\n");
+				break;
+				
+			case 3:
+				sbuf.append("private readonly By "+currentLocatorName+" = Via.Id(\""+formcontrolname+"\");\n");
 				break;
 			}
 			allLocatorNames.add(currentLocatorName);

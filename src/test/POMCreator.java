@@ -121,90 +121,59 @@ public class POMCreator
 				element.parameterType = "string"; 
 				System.out.println(RadioButtonOperation(element));
 				break;
+				
+			case "lbl":
+				element.methodValidationName = "Validate" + a.substring(3, a.length()); 
+				element.parameterType = "string";
+				System.out.println(LabelSingleOperation(element));
+				break;
+				
+			case "lbm":
+				element.methodValidationName = "Validate" + a.substring(3, a.length()); 
+				element.parameterType = "string[]";
+				System.out.println(LabelMultiOperation(element));
+				break;
+				
+			case "chk":
+				element.methodValidationName = "Validate" + a.substring(3, a.length()); 
+				element.parameterType = "bool";
+				System.out.println(CheckOperation(element));
+				break;
 			}
 			
 			myElements.add(element);
 		}
-		
-	
 	}
 	
-	/*public static void main(String[] args) 
+	public static String CheckOperation(Element e)
 	{
-		String inputElements = "txtProductName,txtBrandName,txtGenericName,ddlManufacturer,txtNdc,ddlNdcUnitQualifier,txtStrength,ddlDispensableUnitAndHcpcUom,txtDispensableUnitQuantity,txtHcpcUomQuantity,ddlIndividualUnitOfMeasure,txtCaloriesPerIndividualUom,txtMlPerCcPerIndividualUom,lblCaloriesPerMlPerCc,ddmAssessment,ddmAssignedSupplyKit,txtProductAlertNotes,rdoOrderType,tglTrackInventory,tglTrackLots,tglTrackSerialNumber,tglSelectSerialNumbersWhenAddingToDeliveryTicket,tglRequiresRentPurchaseLetterAtFirstMonth,ddlAssetSettingsProfile,txtDaysBetweenChecks,txtDaysBetweenPreventiveMaintenance,txtDepricationLifespan,ddlReturnStatus,ddlEquipmentProfile,tglIvContainer,ttxtContainerVolume,btnNext";
-		
-		String[] allElements = inputElements.split(",");
-		
-		ArrayList<Element> myElements = new ArrayList<Element>();
-		
-		for(String a : allElements)
-		{
-			Element element = new Element();
-			element.locator = a;
-			element.elementType = a.substring(0, 3);
-			String pname = a.substring(3, a.length());
-			element.parameterName = pname.substring(0,1).toLowerCase() + pname.substring(1, pname.length());
-			switch(element.elementType)
-			{//rdoOrderType
-			case "txq":
-				element.methodActionName = "Enter" + a.substring(3, a.length()); 
-				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
-				element.parameterType = "string"; 
-				System.out.println(QuantityBoxOperation(element));
-				break;
-			
-			case "txp":
-				element.methodActionName = "Enter" + a.substring(3, a.length()); 
-				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
-				element.parameterType = "string"; 
-				System.out.println(PriceBoxOperation(element));
-				break;
-				
-			case "txt": 
-				element.methodActionName = "Enter" + a.substring(3, a.length()); 
-				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
-				element.parameterType = "string"; 
-				System.out.println(TextBoxOperation(element));
-				break;
-				
-			case "ddl":
-				element.methodActionName = "Select" + a.substring(3, a.length()); 
-				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
-				element.parameterType = "string"; 
-				System.out.println(DropdownOperation(element));
-				break;
-				
-			case "ddm": 
-				element.methodActionName = "Select" + a.substring(3, a.length()); 
-				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
-				element.parameterType = "string[]"; 
-				System.out.println(MultiSelectDropdownOperation(element));
-				break;
-				
-			case "btn": 
-				element.methodActionName = "Click" + a.substring(3, a.length()) + "Button"; 
-				element.parameterType = ""; 
-				System.out.println(ButtonOperation(element));
-				break;
-				
-			case "tgl": 
-				element.methodActionName = "Toggle" + a.substring(3, a.length()); 
-				element.parameterType = "bool"; 
-				System.out.println(ToggleOperation(element));
-				break;
-				
-			case "rdo": 
-				element.methodActionName = "Select" + a.substring(3, a.length()); 
-				element.parameterType = "string"; 
-				System.out.println(RadioButtonOperation(element));
-				break;
-			}
-			
-			myElements.add(element);
-		}
-		
-	}*/
+		StringBuffer s = new StringBuffer();
+		s.append("public void "+e.methodValidationName+"("+e.parameterType+" "+e.parameterName+")\n");
+		s.append("{\n");
+		s.append("Actions.ValidateCheck("+e.locator+", "+e.parameterName+");\n");
+		s.append("}\n");
+		return s.toString();
+	}
 	
+	public static String LabelMultiOperation(Element e)
+	{
+		StringBuffer s = new StringBuffer();
+		s.append("public void "+e.methodValidationName+"("+e.parameterType+" "+e.parameterName+")\n");
+		s.append("{\n");
+		s.append("Actions.ValidateTextIs("+e.locator+", "+e.parameterName+");\n");
+		s.append("}\n");
+		return s.toString();
+	}
+	
+	public static String LabelSingleOperation(Element e)
+	{
+		StringBuffer s = new StringBuffer();
+		s.append("public void "+e.methodValidationName+"("+e.parameterType+" "+e.parameterName+")\n");
+		s.append("{\n");
+		s.append("Actions.ValidateTextIs("+e.locator+", "+e.parameterName+");\n");
+		s.append("}\n");
+		return s.toString();
+	}	
 	
 	public static String RadioButtonOperation(Element e)
 	{
@@ -234,12 +203,12 @@ public class POMCreator
 	public static String ButtonOperation(Element e)
 	{
 		StringBuffer s = new StringBuffer();
-		s.append("public "+e.parameterType+" "+e.methodActionName+"()\n");
+		s.append("public void "+e.methodActionName+"()\n");
 		s.append("{\n");
 		s.append("Waits.WaitForElementToBeClickable("+e.locator+", WaitType.Small);\n");
 		s.append("Actions.Click("+e.locator+");\n");
 		s.append("return CreateInstance<>();\n");
-		s.append("}\n");		
+		s.append("}\n");
 		return s.toString();
 	}
 	
