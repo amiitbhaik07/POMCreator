@@ -32,6 +32,30 @@ public class DOMParser
 	static WebDriver driver;
 	static WebDriverWait wait;
 	
+	public static void main(String args[]) throws Exception
+	{		
+		System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir")+"\\chromedriver.exe");
+		driver = new ChromeDriver();
+		driver.manage().window().maximize();
+		driver.get("http://www.caretend.io");	
+		wait = new WebDriverWait(driver, 120);		
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='username']"))).sendKeys("caretend.qa@wellsky.com");;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='password']"))).sendKeys("Sup3rS3cr3t_@$!");;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]"))).click();
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]/span[contains(text(),'SIGN IN')]"))).click();
+		while(true)
+		{
+			try
+			{
+				RunInLoop();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public static void RunInLoop() throws Exception
 	{
 		
@@ -223,27 +247,5 @@ public class DOMParser
 	
 	
 	
-	public static void main(String args[]) throws Exception
-	{		
-		System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir")+"\\chromedriver.exe");
-		driver = new ChromeDriver();
-		driver.manage().window().maximize();
-		driver.get("http://www.caretend.io");		
-		wait = new WebDriverWait(driver, 120);		
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='username']"))).sendKeys("echo.qa@mediware.com");;
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='password']"))).sendKeys("KorbenDallas@Med1w4re");;
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]"))).click();
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]/span[contains(text(),'SIGN IN')]"))).click();
-		while(true)
-		{
-			try
-			{
-				RunInLoop();
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
+	
 }
