@@ -16,15 +16,16 @@ public class POMCreator
 	
 	static String correctedElements = "";
 	static JFrame frame;
-	public static void ShowMessage(String inputElements) throws Exception
+	public static void ShowMessage(ArrayList<Locator> allLocators) throws Exception
 	{
 		//String inputElements = "txtName,ddlCategoryReferenceItemRefKey,ddmAssessmentRefKeys,txtCmnDescription,ddlPriceCodeRefKey,ddlRevenueCodeRefKey,ddlUb04RevenueCodeRefKey,tglIsTaxable,ddlDispensingUnitReferenceItemRefKey,ddlTherapyTypeReferenceItemRefKey,txtPricePerDispensableUnit,txtHcpcCode,txtHcpcCodeReferenceItemRefKey,ddlHcpcUnitOfMeasureReferenceItemRefKey,txtHcpcDescription";
 		frame = new JFrame("Please confirm web elements");
         JTextArea ta = new JTextArea(30, 60);
-        String[] a = inputElements.split(",");
+        
+        //String[] a = inputElements.split(",");
         StringBuffer sbuf = new StringBuffer();
-        for(String a1 : a)
-        	sbuf.append(a1+"\n");
+        for(Locator a1 : allLocators)
+        	sbuf.append(a1.locatorName + "\n");
         ta.setText(sbuf.toString());
         JScrollPane sp = new JScrollPane(ta);
         frame.setLayout(new FlowLayout());
@@ -50,13 +51,44 @@ public class POMCreator
         }        
 	}
 	
-	public static void PrintMethods(String inputElements) throws Exception
-	{
-		System.out.println("//"+inputElements);
+	public static void PrintMethods(ArrayList<Locator> allLocators) throws Exception
+	{		
+		ShowMessage(allLocators);
 		
-		ShowMessage(inputElements);
+		boolean found;
+		for(String a : correctedElements.split("\n"))
+		{
+			found = false;
+			for(Locator l : allLocators)
+				if(a.equalsIgnoreCase(l.locatorName))
+				{
+					System.out.println(l.completeLocator);
+					found=true;
+					break;
+				}
+			
+			if(found==false && a.startsWith("lbl"))
+			{
+				System.out.println("private readonly By "+a+" = Via.LabelFor(\"\");");
+				found = true;
+			}
+			
+			if(found==false)
+			{
+				String onlyName = a.substring(3, a.length());
+				for(Locator l : allLocators)
+				{
+					if(l.locatorName.substring(3, l.locatorName.length()).equalsIgnoreCase(onlyName))
+					{
+						System.out.println(l.completeLocator);
+						found=true;
+						break;
+					}
+				}
+			}
+		}
 		
-		//String[] allElements = inputElements.split(",");
+		System.out.println();
 		
 		ArrayList<Element> myElements = new ArrayList<Element>();
 		
@@ -81,6 +113,13 @@ public class POMCreator
 				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
 				element.parameterType = "string"; 
 				System.out.println(PriceBoxOperation(element));
+				break;
+				
+			case "txa": 
+				element.methodActionName = "Enter" + a.substring(3, a.length()); 
+				element.methodValidationName = "Validate" + a.substring(3, a.length()) + "State"; 
+				element.parameterType = "string"; 
+				System.out.println(TextAreaOperation(element));
 				break;
 				
 			case "txt": 
@@ -254,6 +293,28 @@ public class POMCreator
 		s.append("public "+e.parameterType+" "+e.methodActionName+"()\n");
 		s.append("{\n");
 		s.append("string "+e.parameterName+" = CommonMethods.GenerateRandomAlphanumericString(40);\n");
+		s.append(e.methodActionName + "("+e.parameterName+");\n");
+		s.append("return " + e.parameterName + ";\n");
+		s.append("}\n\n");		
+		s.append("public void "+e.methodActionName+"("+e.parameterType+" "+e.parameterName+")\n");
+		s.append("{\n");
+		s.append("Waits.WaitForElementToBeClickable("+e.locator+", WaitType.Small);\n");
+		s.append("Actions.Clear("+e.locator+");\n");
+		s.append("Actions.SendKeys("+e.locator+", "+e.parameterName+");\n");
+		s.append("}\n\n");
+		s.append("public void "+e.methodValidationName+"(bool isValid)\n");
+		s.append("{\n");
+		s.append("Actions.ValidateElementState("+e.locator+", isValid);\n");
+		s.append("}\n");
+		return s.toString();
+	}
+	
+	public static String TextAreaOperation(Element e)
+	{
+		StringBuffer s = new StringBuffer();
+		s.append("public "+e.parameterType+" "+e.methodActionName+"()\n");
+		s.append("{\n");
+		s.append("string "+e.parameterName+" = CommonMethods.GenerateRandomAlphanumericString(100);\n");
 		s.append(e.methodActionName + "("+e.parameterName+");\n");
 		s.append("return " + e.parameterName + ";\n");
 		s.append("}\n\n");		

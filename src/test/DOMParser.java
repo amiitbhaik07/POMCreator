@@ -32,6 +32,30 @@ public class DOMParser
 	static WebDriver driver;
 	static WebDriverWait wait;
 	
+	public static void main(String args[]) throws Exception
+	{		
+		System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir")+"\\chromedriver.exe");
+		driver = new ChromeDriver();
+		driver.manage().window().maximize();
+		driver.get("http://www.caretend.io");	
+		wait = new WebDriverWait(driver, 120);		
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='username']"))).sendKeys("caretend.qa@wellsky.com");;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='password']"))).sendKeys("Sup3rS3cr3t_@$!");;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]"))).click();
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]/span[contains(text(),'SIGN IN')]"))).click();
+		while(true)
+		{
+			try
+			{
+				RunInLoop();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public static void RunInLoop() throws Exception
 	{
 		
@@ -86,7 +110,8 @@ public class DOMParser
 		}
 
 
-		StringBuffer sbuf = new StringBuffer();
+		//StringBuffer sbuf = new StringBuffer();
+		ArrayList<Locator> allLocators = new ArrayList<Locator>();
 		String currentLocatorName, formcontrolname=null;
 		
 		//0 = formcontrolname
@@ -95,6 +120,7 @@ public class DOMParser
 		int currentState = 0;
 		for(WebElement w : myElements)
 		{
+			Locator l = new Locator();
 			currentState = 0;
 			formcontrolname = w.getAttribute("formcontrolname");
 			if(formcontrolname==null || formcontrolname.equals(""))
@@ -157,28 +183,35 @@ public class DOMParser
 				break;
 			}
 			
+			l.locatorName = currentLocatorName;
+			
 			switch(currentState)
 			{
 			case 0: 
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
+				l.completeLocator = "private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");";
+				//sbuf.append("private readonly By "+currentLocatorName+" = Via.FormControlName(\""+w.getAttribute("formcontrolname")+"\");\n");
 				break;
 				
 			case 1:
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.NgReflectName(\""+w.getAttribute("ng-reflect-name")+"\");\n");
+				l.completeLocator = "private readonly By "+currentLocatorName+" = Via.NgReflectName(\""+w.getAttribute("ng-reflect-name")+"\");";
+				//sbuf.append("private readonly By "+currentLocatorName+" = Via.NgReflectName(\""+w.getAttribute("ng-reflect-name")+"\");\n");
 				break;
 				
 			case 2:
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.CheckFlagFor(\""+formcontrolname+"\");\n");
+				l.completeLocator = "private readonly By "+currentLocatorName+" = Via.CheckFlagFor(\""+formcontrolname+"\");";
+				//sbuf.append("private readonly By "+currentLocatorName+" = Via.CheckFlagFor(\""+formcontrolname+"\");\n");
 				break;
 				
 			case 3:
-				sbuf.append("private readonly By "+currentLocatorName+" = Via.Id(\""+formcontrolname+"\");\n");
+				l.completeLocator = "private readonly By "+currentLocatorName+" = Via.Id(\""+formcontrolname+"\");";
+				//sbuf.append("private readonly By "+currentLocatorName+" = Via.Id(\""+formcontrolname+"\");\n");
 				break;
 			}
 			allLocatorNames.add(currentLocatorName);
+			allLocators.add(l);
 		}
 		
-		System.out.println(sbuf.toString());				
+		//System.out.println(sbuf.toString());				
 		System.out.println("\n");
 		StringBuffer sss = new StringBuffer();		
 		for(int i=0; i<allLocatorNames.size(); i++)
@@ -186,8 +219,8 @@ public class DOMParser
 			if(i!=0)
 				sss.append(",");
 			sss.append(allLocatorNames.get(i));
-		}		
-		POMCreator.PrintMethods(sss.toString());
+		}
+		POMCreator.PrintMethods(allLocators);
 		
 		System.out.println("=====================================================================================================================");
 	}
@@ -223,27 +256,5 @@ public class DOMParser
 	
 	
 	
-	public static void main(String args[]) throws Exception
-	{		
-		System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir")+"\\chromedriver.exe");
-		driver = new ChromeDriver();
-		driver.manage().window().maximize();
-		driver.get("http://www.caretend.io");		
-		wait = new WebDriverWait(driver, 120);		
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='username']"))).sendKeys("echo.qa@mediware.com");;
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input[@formcontrolname='password']"))).sendKeys("KorbenDallas@Med1w4re");;
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]"))).click();
-		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(@class,'next-button')]/span[contains(text(),'SIGN IN')]"))).click();
-		while(true)
-		{
-			try
-			{
-				RunInLoop();
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-	}
+	
 }
